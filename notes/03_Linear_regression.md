@@ -1,107 +1,126 @@
-# Linear Regression
+# Linear Regression — Notes
 
-## Concept
-Linear Regression predicts a **continuous numerical value** by learning a linear relationship between input features and the target.
+## 1. What is Linear Regression?
 
-Example:
-`Experience → Salary`
+Linear Regression is a supervised machine learning algorithm used to predict a continuous numerical target, such as marks, salary, or house prices.
 
-Basic equation:
-`y = mx + b`
+**Simple Linear Regression:**
 
-- `y` → predicted value
-- `x` → feature
-- `m` → slope/weight
-- `b` → intercept/bias
+\[
+\hat{y}=wx+b
+\]
 
-## Important Terms
+- \(x\): input feature
+- \(\hat{y}\): predicted value
+- \(w\): learned weight or coefficient
+- \(b\): learned intercept
 
-- **X (features)** → inputs used for prediction.
-- **y (target)** → value the model predicts.
-- **Training data** → used to learn model parameters.
-- **Test data** → unseen data used to evaluate the trained model.
-- **Generalization** → performing well on unseen data.
+**Multiple Linear Regression:**
 
-## Required Libraries
+\[
+\hat{y}=w_1x_1+w_2x_2+\cdots+w_nx_n+b
+\]
 
-```python
-import pandas as pd
-import matplotlib.pyplot as plt
+Each coefficient represents the expected change in the prediction for a one-unit change in its feature, holding other features fixed.
 
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error
-```
+## 2. How does Linear Regression learn?
 
-## Essential Syntax
+The model selects parameters that minimize prediction errors on the training data.
 
-```python
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
-)
+A common objective is Mean Squared Error (MSE):
 
-model = LinearRegression()
-model.fit(X_train, y_train)
+\[
+MSE=\frac{1}{n}\sum_{i=1}^{n}(y_i-\hat{y}_i)^2
+\]
 
-predictions = model.predict(X_test)
-```
+Scikit-learn's `LinearRegression` generally solves the least-squares problem directly rather than using the gradient-descent loop studied earlier.
 
-## Model Parameters
+## 3. Regression evaluation metrics
 
-```python
-model.coef_
-model.intercept_
-```
+- **MAE:** Mean absolute prediction error. Lower is better.
+- **MSE:** Mean squared error; penalizes large errors more strongly. Lower is better.
+- **RMSE:** Square root of MSE, expressed in the target's units. Lower is better.
+- **R²:** Measures performance relative to predicting the mean of the target. Higher is generally better; it can be negative.
 
-- `coef_` → learned slope/weight.
-- `intercept_` → predicted starting value when feature is 0.
+R² is not the same as prediction accuracy percentage.
 
-## Evaluation
+## 4. Train/test split
 
-**MSE (Mean Squared Error)**
-- Average of squared prediction errors.
-- Larger errors are penalized more.
-- Unit is squared.
+- Training data fits the model.
+- Test data evaluates performance on held-out observations.
+- A validation set or cross-validation can help select models and hyperparameters.
 
-**RMSE (Root Mean Squared Error)**
-- `√MSE`
-- Same unit as the target.
-- Easier to interpret than MSE.
+Evaluating only on training data does not establish how well a model generalizes to unseen data.
 
-```python
-mse = mean_squared_error(y_test, predictions)
-rmse = mse ** 0.5
-```
+## 5. Polynomial Regression
 
-## Prediction vs Evaluation
+Polynomial Regression adds powers of the original features, such as:
 
-**Known actual target:**
-`prediction + actual value → calculate error`
+\[
+\hat{y}=b+w_1x+w_2x^2
+\]
 
-**New/unseen input:**
-`input → prediction`
+It can model curved relationships. Increasing polynomial degree also increases model complexity and can cause overfitting.
 
-If the actual target is unknown, MSE/RMSE cannot be calculated yet.
+## 6. Regularization
 
-## Visualization
+Regularization adds a penalty to the training objective to discourage overly large coefficients.
 
-- `scatter()` → shows actual data points.
-- `plot()` → can show the regression line.
+**Ridge — L2 penalty**
 
-```python
-plt.scatter(X, y)
-plt.plot(X, model.predict(X))
-plt.show()
-```
+\[
+J=MSE+\alpha\sum_j w_j^2
+\]
 
-## Core Flow
+Shrinks coefficients toward zero; generally does not set them exactly to zero.
 
-`Data → X/y → Train/Test Split → Model → fit() → predict() → Evaluate → Visualize`
+**Lasso — L1 penalty**
 
-## Common Mistakes
+\[
+J=MSE+\alpha\sum_j|w_j|
+\]
 
-- Training the model on test data.
-- Passing `y_test` into `predict()`.
-- Calculating MSE with mismatched numbers of actual and predicted values.
-- Using evaluation metrics when the actual target is unknown.
-- Confusing `coef_` with the prediction itself.
+Can set coefficients exactly to zero, providing a form of feature selection.
+
+**Elastic Net**
+
+Combines L1 and L2 penalties. In scikit-learn, `alpha` controls overall regularization strength and `l1_ratio` controls the balance between L1 and L2.
+
+A larger `alpha` means stronger regularization. Too much regularization can cause underfitting.
+
+## 7. Feature scaling and pipelines
+
+Regularized models are commonly used with standardized features because feature scales affect the penalty.
+
+`StandardScaler` transforms features using training-set means and standard deviations. Fit it only on training data, then apply the same transformation to validation/test data.
+
+A scikit-learn `Pipeline` keeps preprocessing and model fitting together and helps prevent data leakage.
+
+## 8. Model vs optimization algorithm
+
+A **model/objective** defines the relationship being learned and what is minimized.
+
+An **optimization algorithm or solver** finds parameters that minimize that objective.
+
+Examples of optimization methods include Gradient Descent, SGD, Momentum, RMSProp, and Adam. Ridge, Lasso, and Elastic Net are regularized regression models/objectives, not optimization algorithms.
+
+## 9. Assumptions and limitations
+
+Classical Linear Regression inference commonly relies on assumptions including linearity in parameters, independent errors, and constant error variance. Normally distributed errors are mainly relevant to certain statistical inference procedures.
+
+Perfect multicollinearity prevents unique identification of individual coefficients. Strongly correlated features can also make coefficient interpretation unstable.
+
+Always assess generalization with suitable held-out data or cross-validation.
+
+## 10. Practical learning summary
+
+1. Train the model with `fit()`.
+2. Generate predictions with `predict()`.
+3. Evaluate predictions using MAE, MSE, RMSE, and R².
+4. Split data into training and test sets.
+5. Compare model configurations using the same split and metrics.
+6. Scale features appropriately for regularized models.
+7. Select hyperparameters using validation data or cross-validation.
+8. Never assume regularization improves every dataset.
+
+**Current progress:** Completed core Linear Regression experiments covering simple/multiple regression, polynomial regression, Ridge, Lasso, Elastic Net, and model evaluation. Next topic: Logistic Regression.
