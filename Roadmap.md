@@ -230,5 +230,4 @@ AI/ML ENGINEER
 4. We maintain this roadmap and progress in your `machine_learning/roadmap.md` file.
 5. If a conversation ends or we switch topics, we resume from the last unfinished subtopic instead of restarting the curriculum.
 
-**Current position:** Part 03 — Machine Learning Fundamentals. Our next lesson is **3.9: Gradients and Gradient Descent**, after reviewing parameters and loss functions.
 
