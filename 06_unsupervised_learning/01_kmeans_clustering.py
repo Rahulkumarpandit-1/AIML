@@ -32,3 +32,24 @@ plt.ylabel("Inertia")
 plt.title("Elbow Method")
 plt.xticks(list(k_values))
 plt.show()
+
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+
+# Scale the features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Fit K-Means on scaled data
+model = KMeans(
+    n_clusters=4,
+    random_state=42,
+    n_init=10
+)
+
+labels = model.fit_predict(X_scaled)
+
+print("Silhouette score:", silhouette_score(X_scaled, labels))
+print("Scaled centroids:\n", model.cluster_centers_)
