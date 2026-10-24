@@ -1,0 +1,2 @@
+timestamp,model,max_depth,min_samples_leaf,random_state,cv_folds,cv_mean_accuracy,cv_std_accuracy,test_accuracy
+2026-10-22T00:07:38,DecisionTreeClassifier,5,2,42,5,0.9187,0.0204,0.9035
