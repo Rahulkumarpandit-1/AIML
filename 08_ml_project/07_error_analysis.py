@@ -1,7 +1,7 @@
 
 from pathlib import Path
 import pandas as pd
-
+from sklearn.metrics import recall_score,precision_score,f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -73,7 +73,8 @@ preprocessor = ColumnTransformer(transformers=[
 # 6. Build the complete model pipeline
 model = Pipeline(steps=[
     ("preprocessor", preprocessor),
-    ("classifier", LogisticRegression(max_iter=1000))
+    ("classifier", LogisticRegression(max_iter=1000,
+                                    ))
 ])
 
 # 7. Fit on training subset, then choose threshold on validation data
@@ -82,13 +83,33 @@ model.fit(X_train, y_train)
 yes_index = list(model.classes_).index("Yes")
 y_val_prob = model.predict_proba(X_val)[:, yes_index]
 
-threshold = 0.40
+for threshold in [0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60]:
+    y_val_pred = [
+        "Yes" if p >= threshold else "No"
+        for p in y_val_prob
+    ]
 
-# 8. Refit on the full training pool
+    precision = precision_score(
+        y_val, y_val_pred, pos_label="Yes", zero_division=0
+    )
+    recall = recall_score(
+        y_val, y_val_pred, pos_label="Yes", zero_division=0
+    )
+    f1 = f1_score(
+        y_val, y_val_pred, pos_label="Yes", zero_division=0
+    )
+
+    print(
+        f"{threshold:>9.2f} | {precision:>9.3f} | "
+        f"{recall:>6.3f} | {f1:>8.3f}"
+    )
+threshold = 0.40    
+
 model.fit(X_train_full, y_train_full)
 
 # 9. Predict on the untouched test set
-y_test_prob = model.predict_proba(X_test)[:, yes_index]
+yes_index = list(model.classes_).index("Yes")
+y_test_prob = model.predict_proba(X_test)[:, yes_index] 
 y_test_pred = ["Yes" if p >= threshold else "No"
                for p in y_test_prob]
 
@@ -108,42 +129,60 @@ false_negatives = results[
     (results["Actual"] == "Yes") &
     (results["Predicted"] == "No")
 ]
-print("\nActual churn rate by contract:")
-print(
-    results.groupby("Contract")["Actual"]
-    .apply(lambda s: (s == "Yes").mean())
-    .mul(100)
-    .round(2)
-)
+print("\nFinal threshold:", threshold)
 
-print("\nModel recall by contract:")
-for contract, group in results.groupby("Contract"):
-    actual_churners = group["Actual"] == "Yes"
-    if actual_churners.sum() > 0:
-        recall = (
-            (group["Predicted"] == "Yes") & actual_churners
-        ).sum() / actual_churners.sum()
+print("\nFinal Test Confusion Matrix:")
+print(confusion_matrix(
+    y_test, y_test_pred, labels=["No", "Yes"]
+))
 
-        print(f"{contract}: {recall:.3f}")
+print("\nFinal Test Classification Report:")
+print(classification_report(
+    y_test,
+    y_test_pred,
+    labels=["No", "Yes"],
+    zero_division=0
+))
+
+print("\nError Counts")
+print("False positives:", len(false_positives))
+print("False negatives:", len(false_negatives))
+# print("\nActual churn rate by contract:")
+# print(
+#     results.groupby("Contract")["Actual"]
+#     .apply(lambda s: (s == "Yes").mean())
+#     .mul(100)
+#     .round(2)
+# )
+
+# print("\nModel recall by contract:")
+# for contract, group in results.groupby("Contract"):
+#     actual_churners = group["Actual"] == "Yes"
+#     if actual_churners.sum() > 0:
+#         recall = (
+#             (group["Predicted"] == "Yes") & actual_churners
+#         ).sum() / actual_churners.sum()
+
+#         print(f"{contract}: {recall:.3f}")
         
         
         
-print("\n contract wise prediction count")
-print(pd.crosstab(
-    results["Contract"],
-    [results["Actual"], results["Predicted"]],
-    rownames=["Contract"],
-    colnames=["Actual","Predicted"],
-    margins=True
-))  
+# print("\n contract wise prediction count")
+# print(pd.crosstab(
+#     results["Contract"],
+#     [results["Actual"], results["Predicted"]],
+#     rownames=["Contract"],
+#     colnames=["Actual","Predicted"],
+#     margins=True
+# ))  
 
-print("\nChurn probability by contract and actual outcome:")
+# print("\nChurn probability by contract and actual outcome:")
 
-print(
-    results.groupby(["Contract","Actual"])["ChurnProbability"]
-    .agg(["count","mean","min","max"])
-    .round(3)
-)  
+# print(
+#     results.groupby(["Contract","Actual"])["ChurnProbability"]
+#     .agg(["count","mean","min","max"])
+#     .round(3)
+# )  
 # print("\nFinal Test Confusion Matrix:")
 # print(confusion_matrix(y_test, y_test_pred, labels=["No", "Yes"]))
 
