@@ -38,3 +38,24 @@ optimizer.step()
 print("Prediction before update:", prediction.item())
 print("Loss before update:", loss.item())
 print("Prediction after update:", model(x).item())
+
+for epoch in range(10):
+    # 1. Make a prediction
+    prediction = model(x)
+
+    # 2. Measure the error
+    loss = loss_fn(prediction, target)
+
+    # 3. Clear old gradients
+    optimizer.zero_grad()
+
+    # 4. Calculate new gradients
+    loss.backward()
+
+    # 5. Update weights and biases
+    optimizer.step()
+
+    print(
+        f"Epoch {epoch + 1}: "
+        f"Loss = {loss.item():.4f}"
+    )
