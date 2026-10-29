@@ -1,14 +1,31 @@
+
 import torch
-import torch.nn as nn
+from torch.utils.data import Dataset, DataLoader
 
-layer = nn.Linear(1, 8)
 
-print("Weight shape:", layer.weight.shape)
-print("Bias shape:", layer.bias.shape)
-print("Total parameters:", sum(p.numel() for p in layer.parameters()))
+class StudyDataset(Dataset):
+    def __init__(self):
+        self.hours = [1, 2, 3, 4, 5]
+        self.scores = [35, 42, 55, 68, 80]
 
-X = torch.tensor([[2.0], [4.0], [6.0]])
-output = layer(X)
+    def __len__(self):
+        return len(self.hours)
 
-print("Input shape:", X.shape)
-print("Output shape:", output.shape)
+    def __getitem__(self, index):
+        x = torch.tensor([self.hours[index]], dtype=torch.float32)
+        y = torch.tensor([self.scores[index]], dtype=torch.float32)
+        return x, y
+
+
+dataset = StudyDataset()
+
+loader = DataLoader(
+    dataset,
+    batch_size=2,
+    shuffle=False
+)
+
+for batch_number, (inputs, targets) in enumerate(loader, start=1):
+    print(f"Batch {batch_number}")
+    print("Inputs:", inputs.flatten().tolist())
+    print("Targets:", targets.flatten().tolist())
