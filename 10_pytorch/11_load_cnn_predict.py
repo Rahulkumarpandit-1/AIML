@@ -1,5 +1,7 @@
 from pathlib import Path
-
+from sklearn.metrics import classification_report       
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
 import torch
 from torch import nn
 from torchvision import datasets, transforms
@@ -19,6 +21,7 @@ model = nn.Sequential(
     nn.MaxPool2d(2),
 
     nn.Flatten(),
+    nn.Dropout(0.1),
     nn.Linear(32 * 8 * 8, 10)
 ).to(device)
 
@@ -51,26 +54,63 @@ test_data = datasets.CIFAR10(
 test_loader = torch.utils.data.DataLoader(
         test_data,
         batch_size=64,
-        shuffle=False   
+        shuffle=False
 )
 
+# 5. CIFAR-10 class names
+classes = test_data.classes
 
-correct = 0
-total = 0
+# 6. Select one image
+image, true_label = test_data[0]
 
-# 7. Make prediction without calculating gradients
+# Add batch dimension: [3, 32, 32] -> [1, 3, 32, 32]
+image = image.unsqueeze(0).to(device)
+
+
+# Store all actual and predicted labels
+all_predictions = []
+all_labels = []
+
+model.eval()
+
 with torch.no_grad():
-    for images,labels in test_loader:
-        
-        images=images.to(device)
-        labels=labels.to(device)
-        logits=model(images)
-        
-        predictions=logits.argmax(dim=1)
-        
-        correct += (predictions == labels).sum().item()
-        total += labels.size(0)
-   
-accuracy = 100 * correct / total
+    for images, labels in test_loader:
 
-print(f"Test Accuracy: {accuracy:.2f}%")
+        images = images.to(device)
+
+        logits = model(images)
+        predictions = logits.argmax(dim=1)
+
+        # Move predictions and labels to CPU
+        all_predictions.extend(predictions.cpu().tolist())
+        all_labels.extend(labels.tolist())
+
+# Create confusion matrix
+cm = confusion_matrix(all_labels, all_predictions)
+
+# Display confusion matrix
+disp = ConfusionMatrixDisplay(
+    confusion_matrix=cm,
+    display_labels=classes
+)
+
+# fig, ax = plt.subplots(figsize=(10, 10))
+# disp.plot(ax=ax, xticks_rotation=45, cmap="Blues")
+# plt.title("CIFAR-10 Confusion Matrix")
+# plt.tight_layout()
+# plt.show()# Calculate accuracy for each class
+
+class_correct = cm.diagonal()
+class_total = cm.sum(axis=1)
+
+class_accuracy = class_correct / class_total * 100
+
+for i, class_name in enumerate(classes):
+    print(
+        f"{class_name}: "
+        f"{class_accuracy[i]:.2f}%"
+    )
+    
+    
+print("\nClassification report:")
+print(classification_report(all_labels, all_predictions,target_names=classes))   
