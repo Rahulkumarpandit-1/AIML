@@ -43,7 +43,7 @@ def test_valid_prediction():
     assert result["predicted_churn"] in ["Yes", "No"]
     assert result["threshold"] == 0.4
 
-
+    
 def test_negative_tenure_is_rejected():
     customer = VALID_CUSTOMER.copy()
     customer["tenure"] = -1

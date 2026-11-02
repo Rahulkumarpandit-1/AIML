@@ -139,7 +139,7 @@ AI/ML ENGINEER
 │   └── Model Saving & Documentation
 │
 ├── 09. DEEP LEARNING FOUNDATIONS
-│   ├── Perceptrons, Weights & Biases
+│   ├── Perceptrons, Weights & Biases+
 │   ├── Activation Functions
 │   ├── Forward Propagation
 │   ├── Neural Network Loss Functions

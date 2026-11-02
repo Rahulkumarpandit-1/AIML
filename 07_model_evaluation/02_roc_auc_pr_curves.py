@@ -40,9 +40,9 @@ y_prob = model.predict_proba(X_test)[:, 1]
 print("ROC-AUC:", roc_auc_score(y_test, y_prob))
 print("Average Precision:", average_precision_score(y_test, y_prob))
 
-# RocCurveDisplay.from_predictions(y_test, y_prob)
-# plt.title("ROC Curve")
-# plt.show()
+RocCurveDisplay.from_predictions(y_test, y_prob)
+plt.title("ROC Curve")
+plt.show()
 
 PrecisionRecallDisplay.from_predictions(y_test, y_prob)
 plt.title("Precision-Recall Curve")
