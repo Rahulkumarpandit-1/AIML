@@ -4,6 +4,7 @@ import torch
 import numpy as np
 from torch.utils.data import Dataset       
 from torchvision import transforms 
+from torchmetrics.detection import MeanAveragePrecision 
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 from torch.utils.data import random_split, DataLoader
@@ -196,72 +197,53 @@ false_negatives = 0
 confidence_threshold = 0.5
 iou_threshold = 0.5
 
+from torchmetrics.detection import MeanAveragePrecision
+
+# Create metric
+metric = MeanAveragePrecision(
+    box_format="xyxy",
+    iou_type="bbox"
+)
+
+model.eval()
+
 with torch.no_grad():
 
     for images, targets in test_Loader:
 
         images = [image.to(device) for image in images]
 
+        # Get model predictions
         predictions = model(images)
+
+        # Prepare data for TorchMetrics
+        preds_for_metric = []
+        targets_for_metric = []
 
         for prediction, target in zip(predictions, targets):
 
-            pred_boxes = prediction["boxes"].cpu()
-            pred_scores = prediction["scores"].cpu()
+            preds_for_metric.append({
+                "boxes": prediction["boxes"].cpu(),
+                "scores": prediction["scores"].cpu(),
+                "labels": (prediction["labels"] - 1).cpu()
+            })
 
-            gt_boxes = target["boxes"].cpu()
+            targets_for_metric.append({
+                "boxes": target["boxes"].cpu(),
+                "labels": (target["labels"] - 1).cpu()
+            })
 
-            # Keep confident predictions
-            selected = pred_scores >= confidence_threshold
-            pred_boxes = pred_boxes[selected]
-
-            matched_gt = set()
-
-            # Match each prediction with a ground-truth box
-            for pred_box in pred_boxes:
-
-                best_iou = 0
-                best_gt_index = -1
-
-                for gt_index, gt_box in enumerate(gt_boxes):
-
-                    if gt_index in matched_gt:
-                        continue
-
-                    iou = calculate_iou(
-                        pred_box.tolist(),
-                        gt_box.tolist()
-                    )
-
-                    if iou > best_iou:
-                        best_iou = iou
-                        best_gt_index = gt_index
-
-                if best_iou >= iou_threshold:
-                    true_positives += 1
-                    matched_gt.add(best_gt_index)
-                else:
-                    false_positives += 1
-
-            false_negatives += len(gt_boxes) - len(matched_gt)
+        # Accumulate results for this batch
+        metric.update(preds_for_metric, targets_for_metric)
 
 
-# Calculate metrics
-precision = (
-    true_positives /
-    (true_positives + false_positives)
-    if true_positives + false_positives > 0 else 0
-)
+# Calculate final metrics across the test dataset
+results = metric.compute()
 
-recall = (
-    true_positives /
-    (true_positives + false_negatives)
-    if true_positives + false_negatives > 0 else 0
-)
+print("\nObject Detection Evaluation")
+print("mAP (0.50:0.95):", round(results["map"].item(), 4))
+print("mAP@0.50:", round(results["map_50"].item(), 4))
+print("mAP@0.75:", round(results["map_75"].item(), 4))
+print("mAR@100:", round(results["mar_100"].item(), 4))
 
-print("\nTest Results")
-print("True Positives:", true_positives)
-print("False Positives:", false_positives)
-print("False Negatives:", false_negatives)
-print("Precision:", round(precision, 4))
-print("Recall:", round(recall, 4))
+
