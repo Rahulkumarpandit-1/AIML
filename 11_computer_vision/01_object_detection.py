@@ -69,8 +69,9 @@ class PennFudanDataset(Dataset):
         labels=torch.ones((len(boxes),),dtype=torch.int64)
         
         target = {
-       "boxes": boxes,
-       "labels": labels
+            "boxes": boxes,
+            "labels": labels,
+            "masks": masks
         }
         return image, target
 dataset = PennFudanDataset("11_computer_vision/data/PennFudanPed")
@@ -186,6 +187,7 @@ def calculate_iou(box1, box2):
 
 
 image,target=test_dataset[0]    
+
 image_tensor = image.to(device)
 
 model.eval()
@@ -197,7 +199,7 @@ false_negatives = 0
 confidence_threshold = 0.5
 iou_threshold = 0.5
 
-from torchmetrics.detection import MeanAveragePrecision
+
 
 # Create metric
 metric = MeanAveragePrecision(
