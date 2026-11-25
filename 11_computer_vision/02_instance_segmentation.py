@@ -210,36 +210,9 @@ for epoch in range(epochs):
     )
     
 
-model.eval()
-
-images, targets = next(iter(test_Loader))
-
-image = images[0].to(device)
-
-with torch.no_grad():
-    prediction = model([image])[0]
-
-scores=prediction["scores"]
-masks=prediction["masks"]
-
-threshold=0.5
-confidence_threshold=0.5
-keep=scores>=confidence_threshold
-filtered_masks=masks[keep]
-
-binary_masks = filtered_masks[:, 0] > threshold
-
-print("Binary masks shape:", binary_masks.shape)
 
 
-print("Predicted boxes:", prediction["boxes"].shape)
-print("Predicted labels:", prediction["labels"])
-print("Confidence scores:", prediction["scores"])
-print("Predicted masks:", prediction["masks"].shape)
 
-metric=MeanAveragePrecision(
-    iou_type="segm"
-)
 model.eval()
 
 metric = MeanAveragePrecision(
